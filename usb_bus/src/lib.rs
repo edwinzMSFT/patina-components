@@ -44,7 +44,7 @@ struct UsbBusMarker;
 
 // SAFETY: UsbBusMarker is a ZST whose GUID uniquely identifies this component.
 unsafe impl ProtocolInterface for UsbBusMarker {
-    const PROTOCOL_GUID: BinaryGuid = BinaryGuid::from_string("a7f36d52-8e3b-4f1a-9c5d-7b2e4a6f8d01");
+    const PROTOCOL_GUID: BinaryGuid = BinaryGuid::from_string("dceefc3d-ad07-4986-be64-f5ba2ed6591c");
 }
 
 /// USB bus Patina component.
