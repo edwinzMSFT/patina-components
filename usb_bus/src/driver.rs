@@ -10,9 +10,18 @@
 //! SPDX-License-Identifier: Apache-2.0
 //!
 
+// possibly upstream these to r_efi
+#[path = "../../protocols/device_path.rs"]
+mod device_path;
+
+#[path = "../../protocols/usb_2_host_controller.rs"]
+mod usb_2_host_controller;
+
 use alloc::boxed::Box;
 use core::{ffi::c_void, ptr::NonNull};
 
+use device_path::EfiDevPathPtr;
+use usb_2_host_controller::{Protocol, UsbPortFeature, UsbPortStatus};
 use r_efi::{efi, efi::protocols::usb_io, protocols::device_path::Protocol as EfiDevicePathProtocol};
 
 use patina::{boot_services::BootServices, driver_binding::DriverBinding};
@@ -43,24 +52,24 @@ impl DriverBinding for UsbBusDriver {
         &self,
         boot_services: &'static U,
         controller: efi::Handle,
-        _remaining_device_path: Option<NonNull<EfiDevicePathProtocol>>,
+        remaining_device_path: Option<NonNull<EfiDevicePathProtocol>>,
     ) -> Result<bool, efi::Status> {
-        // SAFETY: usb_io::Protocol layout matches the USB IO GUID.
-        let usb_io = match unsafe {
-            boot_services.open_protocol::<usb_io::Protocol>(
+        // SAFETY: usb_2_host_controller::Protocol layout matches the USB 2.0 Host Controller GUID.
+        let usb_2_host_controller = match unsafe {
+            boot_services.open_protocol::<usb_2_host_controller::Protocol>(
                 controller,
                 self.agent,
                 controller,
                 efi::OPEN_PROTOCOL_BY_DRIVER,
             )
         } {
-            Ok(usb_io) => usb_io,
+            Ok(usb_2_host_controller) => usb_2_host_controller,
             Err(_) => return Ok(false),
         };
 
         let result = true;
 
-        boot_services.close_protocol(controller, &usb_io::PROTOCOL_GUID, self.agent, controller).ok();
+        boot_services.close_protocol(controller, &usb_2_host_controller::PROTOCOL_GUID, self.agent, controller).ok();
 
         Ok(result)
     }

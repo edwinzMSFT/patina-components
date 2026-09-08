@@ -26,7 +26,6 @@ pub(crate) mod driver;
 //pub(crate) mod test_stubs;
 
 use alloc::boxed::Box;
-
 use r_efi::efi;
 
 use patina::{
