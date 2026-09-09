@@ -15,24 +15,12 @@ use r_efi::base;
 // Placeholder to get things building. Need to reconcile this with the
 // below implementation at some point
 unsafe impl ProtocolInterface for Protocol {
-    const PROTOCOL_GUID: BinaryGuid = BinaryGuid::from_fields(
-        0x3e745226,
-        0x9818,
-        0x45b6,
-        0xa2,
-        0xac,
-        &[0xd7, 0xcd, 0x0e, 0x8b, 0xa2, 0xbc],
-    );
+    const PROTOCOL_GUID: BinaryGuid =
+        BinaryGuid::from_fields(0x3e745226, 0x9818, 0x45b6, 0xa2, 0xac, &[0xd7, 0xcd, 0x0e, 0x8b, 0xa2, 0xbc]);
 }
 
-pub const PROTOCOL_GUID: base::Guid = base::Guid::from_fields(
-    0x3e745226,
-    0x9818,
-    0x45b6,
-    0xa2,
-    0xac,
-    &[0xd7, 0xcd, 0x0e, 0x8b, 0xa2, 0xbc]
-);
+pub const PROTOCOL_GUID: base::Guid =
+    base::Guid::from_fields(0x3e745226, 0x9818, 0x45b6, 0xa2, 0xac, &[0xd7, 0xcd, 0x0e, 0x8b, 0xa2, 0xbc]);
 
 pub type DataDirection = u32;
 
@@ -117,34 +105,16 @@ pub enum UsbDataDirection {
     NoData = 2,
 }
 
-pub type AsyncUsbTransferCallback = unsafe extern "efiapi" fn(
-    *mut core::ffi::c_void,
-    usize,
-    *mut core::ffi::c_void,
-    u32,
-) -> base::Status;
+pub type AsyncUsbTransferCallback =
+    unsafe extern "efiapi" fn(*mut core::ffi::c_void, usize, *mut core::ffi::c_void, u32) -> base::Status;
 
-pub type ProtocolGetCapability = unsafe extern "efiapi" fn(
-    *mut Protocol,
-    *mut u8,
-    *mut u8,
-    *mut u8,
-) -> base::Status;
+pub type ProtocolGetCapability = unsafe extern "efiapi" fn(*mut Protocol, *mut u8, *mut u8, *mut u8) -> base::Status;
 
-pub type ProtocolReset = unsafe extern "efiapi" fn(
-    *mut Protocol,
-    u16,
-) -> base::Status;
+pub type ProtocolReset = unsafe extern "efiapi" fn(*mut Protocol, u16) -> base::Status;
 
-pub type ProtocolGetState = unsafe extern "efiapi" fn(
-    *mut Protocol,
-    *mut UsbHcState,
-) -> base::Status;
+pub type ProtocolGetState = unsafe extern "efiapi" fn(*mut Protocol, *mut UsbHcState) -> base::Status;
 
-pub type ProtocolSetState = unsafe extern "efiapi" fn(
-    *mut Protocol,
-    UsbHcState,
-) -> base::Status;
+pub type ProtocolSetState = unsafe extern "efiapi" fn(*mut Protocol, UsbHcState) -> base::Status;
 
 pub type ProtocolControlTransfer = unsafe extern "efiapi" fn(
     *mut Protocol,
@@ -231,23 +201,12 @@ pub type ProtocolAsyncIsochronousTransfer = unsafe extern "efiapi" fn(
     *mut core::ffi::c_void,
 ) -> base::Status;
 
-pub type ProtocolGetRootHubPortStatus = unsafe extern "efiapi" fn(
-    *mut Protocol,
-    u8,
-    *mut UsbPortStatus,
-) -> base::Status;
+pub type ProtocolGetRootHubPortStatus =
+    unsafe extern "efiapi" fn(*mut Protocol, u8, *mut UsbPortStatus) -> base::Status;
 
-pub type ProtocolSetRootHubPortFeature = unsafe extern "efiapi" fn(
-    *mut Protocol,
-    u8,
-    UsbPortFeature,
-) -> base::Status;
+pub type ProtocolSetRootHubPortFeature = unsafe extern "efiapi" fn(*mut Protocol, u8, UsbPortFeature) -> base::Status;
 
-pub type ProtocolClearRootHubPortFeature = unsafe extern "efiapi" fn(
-    *mut Protocol,
-    u8,
-    UsbPortFeature,
-) -> base::Status;
+pub type ProtocolClearRootHubPortFeature = unsafe extern "efiapi" fn(*mut Protocol, u8, UsbPortFeature) -> base::Status;
 
 #[repr(C)]
 pub struct Protocol {

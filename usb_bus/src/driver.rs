@@ -21,8 +21,8 @@ use alloc::boxed::Box;
 use core::{ffi::c_void, ptr::NonNull};
 
 use device_path::EfiDevPathPtr;
-use usb_2_host_controller::{Protocol, UsbPortFeature, UsbPortStatus};
 use r_efi::{efi, efi::protocols::usb_io, protocols::device_path::Protocol as EfiDevicePathProtocol};
+use usb_2_host_controller::{Protocol, UsbPortFeature, UsbPortStatus};
 
 use patina::{boot_services::BootServices, driver_binding::DriverBinding};
 
@@ -55,7 +55,26 @@ impl DriverBinding for UsbBusDriver {
         remaining_device_path: Option<NonNull<EfiDevicePathProtocol>>,
     ) -> Result<bool, efi::Status> {
         // SAFETY: usb_2_host_controller::Protocol layout matches the USB 2.0 Host Controller GUID.
-        let usb_2_host_controller = match unsafe {
+
+        if let Some(remaining_device_path) = remaining_device_path {
+            let remaining_device_path = unsafe { remaining_device_path.as_ptr() };
+            let is_end_device_path = unsafe {
+                (*remaining_device_path).r#type == device_path::TYPE_END
+                    && (*remaining_device_path).sub_type == device_path::END_ENTIRE_DEVICE_PATH_SUBTYPE
+            };
+            if !is_end_device_path {
+                let device_path_node = unsafe { &*remaining_device_path };
+                if device_path_node.r#type != device_path::TYPE_MESSAGING
+                    || (device_path_node.sub_type != device_path::MSG_USB_DP
+                        && device_path_node.sub_type != device_path::MSG_USB_CLASS_DP
+                        && device_path_node.sub_type != device_path::MSG_USB_WWID_DP)
+                {
+                    return Ok(false);
+                }
+            }
+        }
+
+        if let Err(status) = unsafe {
             boot_services.open_protocol::<usb_2_host_controller::Protocol>(
                 controller,
                 self.agent,
@@ -63,15 +82,33 @@ impl DriverBinding for UsbBusDriver {
                 efi::OPEN_PROTOCOL_BY_DRIVER,
             )
         } {
-            Ok(usb_2_host_controller) => usb_2_host_controller,
-            Err(_) => return Ok(false),
+            if status == efi::Status::ALREADY_STARTED {
+                return Ok(true);
+            } else {
+                return Err(status);
+            }
         };
-
-        let result = true;
 
         boot_services.close_protocol(controller, &usb_2_host_controller::PROTOCOL_GUID, self.agent, controller).ok();
 
-        Ok(result)
+        if let Err(status) = unsafe {
+            boot_services.open_protocol::<device_path::Protocol>(
+                controller,
+                self.agent,
+                controller,
+                efi::OPEN_PROTOCOL_BY_DRIVER,
+            )
+        } {
+            if status == efi::Status::ALREADY_STARTED {
+                return Ok(true);
+            } else {
+                return Err(status);
+            }
+        };
+
+        boot_services.close_protocol(controller, &device_path::PROTOCOL_GUID, self.agent, controller).ok();
+
+        Ok(true)
     }
 
     /// Starts USB Bus support for the given controller.
