@@ -19,8 +19,8 @@ num_enum = { version = "0.7", default-features = false }
 r-efi = { version = "7", default-features = false }
 scroll = { version = "0.13", default-features = false, features = ["derive"] }
 
-[patch.crates-io]
-r-efi = { git = "https://github.com/joschock/r-efi.git", branch = "add_usb_io" }
+#[patch.crates-io]
+#r-efi = { git = "https://github.com/joschock/r-efi.git", branch = "add_usb_io" }
 
 [workspace.lints.clippy]
 undocumented_unsafe_blocks = "warn"

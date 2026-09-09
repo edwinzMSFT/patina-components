@@ -14,11 +14,10 @@
 
 extern crate alloc;
 
-//pub(crate) mod control_transfers;
 //pub(crate) mod descriptors;
 //pub(crate) mod device;
 pub(crate) mod driver;
-//pub(crate) mod hid_io_impl;
+pub(crate) mod usb_io_impl;
 //pub(crate) mod interrupt_transfers;
 //pub(crate) mod usb_bus_defs;
 

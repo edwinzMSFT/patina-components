@@ -1,7 +1,7 @@
 //! USB Bus driver binding implementation.
 //!
 //! The [`UsbBusDriver`] implements [`patina::driver_binding::DriverBinding`] to
-//! manage USB Bus devices. It consumes USB IO and produces HidIo.
+//! manage the USB Bus. It produces USB IO.
 //!
 //! ## License
 //!
