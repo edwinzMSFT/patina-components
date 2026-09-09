@@ -6,7 +6,7 @@
 //! All device-path records are packed according to the UEFI specification.
 
 use patina::BinaryGuid;
-use patina::uefi_protocol::ProtocolInterface;
+use patina::protocol::ProtocolInterface;
 use r_efi::base;
 
 pub type EfiGuid = [u8; 16];

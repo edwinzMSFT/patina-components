@@ -17,19 +17,28 @@ mod device_path;
 #[path = "../../protocols/usb_2_host_controller.rs"]
 mod usb_2_host_controller;
 
-use alloc::boxed::Box;
-use core::{ffi::c_void, ptr::NonNull};
+//use alloc::boxed::Box;
+//use core::{ffi::c_void, ptr::NonNull};
+use core::{ptr::NonNull};
 
-use device_path::EfiDevPathPtr;
-use r_efi::{efi, efi::protocols::usb_io, protocols::device_path::Protocol as EfiDevicePathProtocol};
-use usb_2_host_controller::{Protocol, UsbPortFeature, UsbPortStatus};
+//use device_path::EfiDevPathPtr;
+//use r_efi::{efi, efi::protocols::usb_io, protocols::device_path::Protocol as EfiDevicePathProtocol};
+use r_efi::{efi, protocols::device_path::Protocol as EfiDevicePathProtocol};
+//use usb_2_host_controller::{Protocol, UsbPortFeature, UsbPortStatus};
 
-use patina::{boot_services::BootServices, driver_binding::DriverBinding};
+use patina::{
+    pi::{
+        protocol::status_code,
+        status_code::{EFI_PROGRESS_CODE, EFI_SOFTWARE_DXE_CORE, EFI_SW_DXE_CORE_PC_HANDOFF_TO_NEXT},
+    },
+    uefi::{
+        boot_services::BootServices,
+        driver_binding::DriverBinding,
+    },
+};
 
 //use patina::vendor_protocols::hid_io;
-
 //use crate::{control_transfers, descriptors, device::UsbBusDevice, hid_io_impl, interrupt_transfers, usb_hid_defs::*};
-use patina::boot_services::event::EventTimerType;
 
 /// USB Bus driver that implements [`DriverBinding`].
 pub struct UsbBusDriver {
@@ -57,7 +66,7 @@ impl DriverBinding for UsbBusDriver {
         // SAFETY: usb_2_host_controller::Protocol layout matches the USB 2.0 Host Controller GUID.
 
         if let Some(remaining_device_path) = remaining_device_path {
-            let remaining_device_path = unsafe { remaining_device_path.as_ptr() };
+            let remaining_device_path = remaining_device_path.as_ptr();
             let is_end_device_path = unsafe {
                 (*remaining_device_path).r#type == device_path::TYPE_END
                     && (*remaining_device_path).sub_type == device_path::END_ENTIRE_DEVICE_PATH_SUBTYPE
@@ -114,7 +123,7 @@ impl DriverBinding for UsbBusDriver {
     /// Starts USB Bus support for the given controller.
     fn driver_binding_start<U: BootServices + 'static>(
         &mut self,
-        boot_services: &'static U,
+        _boot_services: &'static U,
         controller: efi::Handle,
         _remaining_device_path: Option<NonNull<EfiDevicePathProtocol>>,
     ) -> Result<(), efi::Status> {
@@ -126,7 +135,7 @@ impl DriverBinding for UsbBusDriver {
     /// Stops USB Bus support for the given controller.
     fn driver_binding_stop<U: BootServices + 'static>(
         &mut self,
-        boot_services: &'static U,
+        _boot_services: &'static U,
         controller: efi::Handle,
         _number_of_children: usize,
         _child_handle_buffer: Option<NonNull<efi::Handle>>,

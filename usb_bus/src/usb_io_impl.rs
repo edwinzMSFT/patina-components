@@ -7,15 +7,11 @@
 //! SPDX-License-Identifier: Apache-2.0
 //!
 
-//#[path = "../../protocols/usb_2_host_controller.rs"]
-//mod usb_2_host_controller;
-
 use core::ffi::c_void;
 use r_efi::efi;
 use r_efi::base::Boolean;
 use r_efi::efi::protocols::usb_io;
 use crate::efi::protocols::usb_io::{Protocol, AsyncUsbTransferCallback};
-//use usb_2_host_controller;
 
 /// Creates a new `UsbIoProtocol` populated with this module's function pointers.
 pub fn new_usb_io_protocol() -> Protocol {

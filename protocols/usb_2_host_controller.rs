@@ -9,7 +9,7 @@
 //! pointers preserve the nullable C interface.
 
 use patina::BinaryGuid;
-use patina::uefi_protocol::ProtocolInterface;
+use patina::protocol::ProtocolInterface;
 use r_efi::base;
 
 // Placeholder to get things building. Need to reconcile this with the
