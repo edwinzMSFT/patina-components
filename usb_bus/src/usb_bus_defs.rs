@@ -8,8 +8,12 @@
 
 use core::ffi::c_void;
 
+use patina::{BinaryGuid, protocol::ProtocolInterface};
 use r_efi::{base::Boolean, efi};
 use r_efi::efi::protocols::{device_path, usb_io};
+
+pub const USB_BUS_PROTOCOL_GUID: BinaryGuid =
+    BinaryGuid::from_string("dceefc3d-ad07-4986-be64-f5ba2ed6591c");
 
 pub const USB_MAX_LANG_ID: usize = 16;
 pub const USB_MAX_INTERFACE: usize = 16;
@@ -63,6 +67,11 @@ pub enum UsbHubApi {}
 #[repr(C)]
 pub struct EfiUsbBusProtocol {
     pub reserved: u64,
+}
+
+// SAFETY: EfiUsbBusProtocol is the private USB bus protocol installed by this driver.
+unsafe impl ProtocolInterface for EfiUsbBusProtocol {
+    const PROTOCOL_GUID: BinaryGuid = USB_BUS_PROTOCOL_GUID;
 }
 
 #[repr(C)]

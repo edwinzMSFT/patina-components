@@ -17,8 +17,8 @@ mod device_path;
 #[path = "../../protocols/usb_2_host_controller.rs"]
 mod usb_2_host_controller;
 
-//use alloc::boxed::Box;
-//use core::{ffi::c_void, ptr::NonNull};
+use alloc::boxed::Box;
+//use core::{ffi::c_void, ptr{self, NonNull}};
 use core::{ptr::NonNull};
 
 //use device_path::EfiDevPathPtr;
@@ -29,7 +29,7 @@ use r_efi::{efi, protocols::device_path::Protocol as EfiDevicePathProtocol};
 use patina::{
     pi::{
         protocol::status_code,
-        status_code::{EFI_PROGRESS_CODE, EFI_SOFTWARE_DXE_CORE, EFI_SW_DXE_CORE_PC_HANDOFF_TO_NEXT},
+        status_code::{EFI_PROGRESS_CODE, EFI_IO_BUS_USB, EFI_IOB_PC_INIT},
     },
     uefi::{
         boot_services::BootServices,
@@ -123,11 +123,71 @@ impl DriverBinding for UsbBusDriver {
     /// Starts USB Bus support for the given controller.
     fn driver_binding_start<U: BootServices + 'static>(
         &mut self,
-        _boot_services: &'static U,
+        boot_services: &'static U,
         controller: efi::Handle,
-        _remaining_device_path: Option<NonNull<EfiDevicePathProtocol>>,
+        remaining_device_path: Option<NonNull<EfiDevicePathProtocol>>,
     ) -> Result<(), efi::Status> {
         log::trace!("USB Bus: driver_binding_start on controller {:?}", controller);
+
+        // The C driver obtains the parent device path before initializing the bus.
+        // The Rust implementation currently has no status-code reporting service,
+        // so the protocol lookup is retained while its value is intentionally unused.
+        let _parent_device_path = unsafe {
+            boot_services.open_protocol::<device_path::Protocol>(
+                controller,
+                self.agent,
+                controller,
+                efi::OPEN_PROTOCOL_GET_PROTOCOL,
+            )
+        }?;
+
+        // SAFETY: `p` is the only mutable reference to the `StatusCodeRuntimeProtocol` in this scope.
+        let Ok(p) = (unsafe { boot_services.locate_protocol::<status_code::StatusCodeProtocol>(None) }) else {
+            log::error!("Performance: Fail to find status code protocol.");
+            return Err(efi::Status::NOT_FOUND);
+        };
+
+        let _status = p.report_status_code(
+            EFI_PROGRESS_CODE,
+            EFI_IO_BUS_USB | EFI_IOB_PC_INIT,
+            0,
+            patina::guid::CALLER_ID.as_efi_guid(),
+        )?;
+        // report_status_code
+
+        let bus_protocol_exists = unsafe {
+            boot_services
+                .open_protocol::<crate::usb_bus_defs::EfiUsbBusProtocol>(
+                    controller,
+                    self.agent,
+                    controller,
+                    efi::OPEN_PROTOCOL_GET_PROTOCOL,
+                )
+                .is_ok()
+        };
+
+        if bus_protocol_exists {
+            if remaining_device_path.is_some_and(|path| unsafe {
+                (*path.as_ptr()).r#type == device_path::TYPE_END
+                    && (*path.as_ptr()).sub_type == device_path::END_ENTIRE_DEVICE_PATH_SUBTYPE
+            }) {
+                return Ok(());
+            }
+
+            // Wanted-device-path storage and recursive child connection are not
+            // implemented in the current Rust bus model yet.
+            log::debug!("USB Bus: existing bus requires child connection handling");
+            return Ok(());
+        }
+
+        // This is the Rust equivalent of the first-start portion of
+        // UsbBusBuildProtocol. The full host-controller enumeration is still
+        // pending, but installing the bus protocol establishes the controller's
+        // started state for subsequent binding calls.
+        boot_services.install_protocol_interface(
+            Some(controller),
+            Box::new(crate::usb_bus_defs::EfiUsbBusProtocol { reserved: 0 }),
+        )?;
 
         Ok(())
     }
