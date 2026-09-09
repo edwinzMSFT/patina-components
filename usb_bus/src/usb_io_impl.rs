@@ -7,6 +7,8 @@
 //! SPDX-License-Identifier: Apache-2.0
 //!
 
+#![allow(dead_code)]
+
 use core::ffi::c_void;
 use r_efi::efi;
 use r_efi::base::Boolean;
