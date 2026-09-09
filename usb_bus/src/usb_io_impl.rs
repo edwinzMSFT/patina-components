@@ -89,7 +89,7 @@ unsafe extern "efiapi" fn usb_io_isochronous_transfer(
     _data_length: usize,
     _usb_status: *mut u32,
 ) -> efi::Status {
-    efi::Status::SUCCESS
+    efi::Status::UNSUPPORTED
 }
 
 unsafe extern "efiapi" fn usb_io_async_isochronous_transfer(
@@ -100,7 +100,7 @@ unsafe extern "efiapi" fn usb_io_async_isochronous_transfer(
     _callback: AsyncUsbTransferCallback,
     _context: *mut c_void,
 ) -> efi::Status {
-    efi::Status::SUCCESS
+    efi::Status::UNSUPPORTED
 }
 
 unsafe extern "efiapi" fn usb_io_get_device_descriptor(
