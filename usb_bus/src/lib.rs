@@ -15,8 +15,11 @@
 extern crate alloc;
 
 pub(crate) mod driver;
-pub(crate) mod usb_io_impl;
 pub(crate) mod usb_bus_defs;
+pub(crate) mod usb_desc;
+pub(crate) mod usb_hub;
+pub(crate) mod usb_io_impl;
+pub(crate) mod usb_utility;
 
 //#[cfg(test)]
 //pub(crate) mod test_stubs;
@@ -26,13 +29,13 @@ use r_efi::efi;
 
 use patina::{
     BinaryGuid,
+    component::{component, params},
+    error::Result,
+    protocol::ProtocolInterface,
     uefi::{
         boot_services::{BootServices, StandardBootServices},
         driver_binding::UefiDriverBinding,
     },
-    error::Result,
-    component::{component, params},
-    protocol::ProtocolInterface,
 };
 
 /// Zero-sized marker protocol used to create a dedicated driver binding handle.
