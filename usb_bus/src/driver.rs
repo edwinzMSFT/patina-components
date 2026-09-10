@@ -24,7 +24,7 @@ use core::{ptr::NonNull};
 //use device_path::EfiDevPathPtr;
 //use r_efi::{efi, efi::protocols::usb_io, protocols::device_path::Protocol as EfiDevicePathProtocol};
 use r_efi::{efi, protocols::device_path::Protocol as EfiDevicePathProtocol};
-//use usb_2_host_controller::{Protocol, UsbPortFeature, UsbPortStatus};
+use usb_2_host_controller::{Protocol as Usb2HcProtocol, UsbPortFeature, UsbPortStatus};
 
 use patina::{
     pi::{
@@ -36,6 +36,8 @@ use patina::{
         driver_binding::DriverBinding,
     },
 };
+
+use crate::usb_bus_defs::{EfiUsbBusProtocol, USB_BUS_PROTOCOL_GUID};
 
 //use patina::vendor_protocols::hid_io;
 //use crate::{control_transfers, descriptors, device::UsbBusDevice, hid_io_impl, interrupt_transfers, usb_hid_defs::*};
@@ -63,7 +65,7 @@ impl DriverBinding for UsbBusDriver {
         controller: efi::Handle,
         remaining_device_path: Option<NonNull<EfiDevicePathProtocol>>,
     ) -> Result<bool, efi::Status> {
-        // SAFETY: usb_2_host_controller::Protocol layout matches the USB 2.0 Host Controller GUID.
+        // SAFETY: Usb2HcProtocol layout matches the USB 2.0 Host Controller GUID.
 
         if let Some(remaining_device_path) = remaining_device_path {
             let remaining_device_path = remaining_device_path.as_ptr();
@@ -84,7 +86,7 @@ impl DriverBinding for UsbBusDriver {
         }
 
         if let Err(status) = unsafe {
-            boot_services.open_protocol::<usb_2_host_controller::Protocol>(
+            boot_services.open_protocol::<Usb2HcProtocol>(
                 controller,
                 self.agent,
                 controller,
@@ -138,8 +140,8 @@ impl DriverBinding for UsbBusDriver {
                 self.agent,
                 controller,
                 efi::OPEN_PROTOCOL_GET_PROTOCOL,
-            )
-        }?;
+            )?
+        };
 
         // SAFETY: `p` is the only mutable reference to the `StatusCodeRuntimeProtocol` in this scope.
         let Ok(p) = (unsafe { boot_services.locate_protocol::<status_code::StatusCodeProtocol>(None) }) else {
@@ -157,7 +159,7 @@ impl DriverBinding for UsbBusDriver {
 
         let bus_protocol_exists = unsafe {
             boot_services
-                .open_protocol::<crate::usb_bus_defs::EfiUsbBusProtocol>(
+                .open_protocol::<EfiUsbBusProtocol>(
                     controller,
                     self.agent,
                     controller,
@@ -174,6 +176,10 @@ impl DriverBinding for UsbBusDriver {
                 return Ok(());
             }
 
+            // implement UsbBusAddWantedUsbIoDP
+
+            // implement UsbBusRecursivelyConnectWantedUsbIo
+
             // Wanted-device-path storage and recursive child connection are not
             // implemented in the current Rust bus model yet.
             log::debug!("USB Bus: existing bus requires child connection handling");
@@ -186,7 +192,7 @@ impl DriverBinding for UsbBusDriver {
         // started state for subsequent binding calls.
         boot_services.install_protocol_interface(
             Some(controller),
-            Box::new(crate::usb_bus_defs::EfiUsbBusProtocol { reserved: 0 }),
+            Box::new(EfiUsbBusProtocol { reserved: 0 }),
         )?;
 
         Ok(())
